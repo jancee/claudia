@@ -74,6 +74,7 @@ export const ConversationNavigation: React.FC<ConversationNavigationProps> = ({
   onNavigate,
 }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Process messages to create navigation structure
   const navigationItems = useMemo(() => {
@@ -119,15 +120,59 @@ export const ConversationNavigation: React.FC<ConversationNavigationProps> = ({
     return items;
   }, [messages]);
 
+  // Helper function to scroll to bottom
+  const scrollToBottom = () => {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        // Try different approaches to find the scroll container
+        let scrollElement = null;
+        
+        // Method 1: Radix ScrollArea viewport
+        scrollElement = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+        
+        // Method 2: Look for overflow auto elements
+        if (!scrollElement) {
+          scrollElement = scrollAreaRef.current?.querySelector('.overflow-auto');
+        }
+        
+        // Method 3: Find element with scroll capability
+        if (!scrollElement) {
+          const elements = scrollAreaRef.current?.querySelectorAll('*');
+          elements?.forEach((el) => {
+            const style = window.getComputedStyle(el);
+            if (style.overflow === 'auto' || style.overflowY === 'auto' || style.overflow === 'scroll' || style.overflowY === 'scroll') {
+              scrollElement = el;
+            }
+          });
+        }
+        
+        // Method 4: Fallback to container ref
+        if (!scrollElement) {
+          scrollElement = containerRef.current?.parentElement;
+        }
+        
+        if (scrollElement) {
+          // Smooth scroll to bottom
+          scrollElement.scrollTo({
+            top: scrollElement.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      }, 150);
+    });
+  };
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messages.length > 0 && scrollAreaRef.current) {
-      setTimeout(() => {
-        const scrollElement = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-        if (scrollElement) {
-          scrollElement.scrollTop = scrollElement.scrollHeight;
-        }
-      }, 200);
+    if (navigationItems.length > 0) {
+      scrollToBottom();
+    }
+  }, [navigationItems.length]);
+
+  // Also listen for messages changes to ensure we catch all updates
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom();
     }
   }, [messages.length]);
 
@@ -141,7 +186,7 @@ export const ConversationNavigation: React.FC<ConversationNavigationProps> = ({
       </div>
       
       <ScrollArea ref={scrollAreaRef} className="flex-1">
-        <div className="py-1">
+        <div ref={containerRef} className="py-1">
           {/* 分类标题 */}
           {navigationItems.length > 0 && (
             <div className="px-4 py-1.5 sticky top-0 bg-card z-10 border-b">
