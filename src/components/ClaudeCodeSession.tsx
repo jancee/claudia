@@ -202,8 +202,18 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
   const rowVirtualizer = useVirtualizer({
     count: displayableMessages.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 150, // Estimate, will be dynamically measured
-    overscan: 5,
+    estimateSize: (index) => {
+      // More accurate size estimation based on message type
+      const message = displayableMessages[index];
+      if (!message) return 150;
+      
+      // Estimate based on message type and content
+      if (message.type === 'user') return 80;
+      if (message.type === 'assistant') return 200;
+      if (message.type === 'result') return 120;
+      return 150;
+    },
+    overscan: 3, // Reduce overscan to minimize off-screen rendering
   });
 
   // Prepare messages for navigation
@@ -974,39 +984,33 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
       )}
       
       <div
-        className="relative w-full px-2 pt-4 pb-2"
+        className="relative w-full px-2 pt-4 pb-2 virtual-scroll-container"
         style={{
           height: `${Math.max(rowVirtualizer.getTotalSize(), 100)}px`,
           minHeight: '100px',
         }}
       >
-        <AnimatePresence>
-          {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-            const message = displayableMessages[virtualItem.index];
-            if (!message) return null;
-            return (
-              <motion.div
-                key={virtualItem.key}
-                data-index={virtualItem.index}
-                ref={(el) => el && rowVirtualizer.measureElement(el)}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-x-4 pb-4"
-                style={{
-                  top: virtualItem.start,
-                }}
-              >
-                <StreamMessage 
-                  message={message} 
-                  streamMessages={messages}
-                  onLinkDetected={handleLinkDetected}
-                />
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
+        {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+          const message = displayableMessages[virtualItem.index];
+          if (!message) return null;
+          return (
+            <div
+              key={virtualItem.key}
+              data-index={virtualItem.index}
+              ref={(el) => el && rowVirtualizer.measureElement(el)}
+              className="absolute inset-x-4 pb-4 virtual-scroll-item"
+              style={{
+                top: virtualItem.start,
+              }}
+            >
+              <StreamMessage 
+                message={message} 
+                streamMessages={messages}
+                onLinkDetected={handleLinkDetected}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* Loading indicator under the latest message */}
