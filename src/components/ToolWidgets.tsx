@@ -68,9 +68,9 @@ import { motion, AnimatePresence } from "framer-motion";
  */
 export const TodoWidget: React.FC<{ todos: any[]; result?: any }> = ({ todos, result: _result }) => {
   const statusIcons = {
-    completed: <CheckCircle2 className="h-4 w-4 text-green-500" />,
-    in_progress: <Clock className="h-4 w-4 text-blue-500 animate-pulse" />,
-    pending: <Circle className="h-4 w-4 text-muted-foreground" />
+    completed: <CheckCircle2 className="h-3 w-3 text-green-500" />,
+    in_progress: <Clock className="h-3 w-3 text-blue-500 animate-pulse" />,
+    pending: <Circle className="h-3 w-3 text-muted-foreground" />
   };
 
   const priorityColors = {
@@ -80,26 +80,26 @@ export const TodoWidget: React.FC<{ todos: any[]; result?: any }> = ({ todos, re
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 mb-3">
-        <FileEdit className="h-4 w-4 text-primary" />
-        <span className="text-sm font-medium">Todo List</span>
+    <div className="space-y-1">
+      <div className="flex items-center gap-1 mb-1">
+        <FileEdit className="h-3 w-3 text-primary" />
+        <span className="text-xs font-medium">Todo List</span>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         {todos.map((todo, idx) => (
           <div
             key={todo.id || idx}
             className={cn(
-              "flex items-start gap-3 p-3 rounded-lg border bg-card/50",
+              "flex items-start gap-2 p-2 rounded border bg-card/50",
               todo.status === "completed" && "opacity-60"
             )}
           >
             <div className="mt-0.5">
               {statusIcons[todo.status as keyof typeof statusIcons] || statusIcons.pending}
             </div>
-            <div className="flex-1 space-y-1">
+            <div className="flex-1 space-y-0.5">
               <p className={cn(
-                "text-sm",
+                "text-xs",
                 todo.status === "completed" && "line-through"
               )}>
                 {todo.content}
@@ -107,7 +107,7 @@ export const TodoWidget: React.FC<{ todos: any[]; result?: any }> = ({ todos, re
               {todo.priority && (
                 <Badge 
                   variant="outline" 
-                  className={cn("text-xs", priorityColors[todo.priority as keyof typeof priorityColors])}
+                  className={cn("text-[10px] px-1 py-0 h-4", priorityColors[todo.priority as keyof typeof priorityColors])}
                 >
                   {todo.priority}
                 </Badge>
@@ -502,8 +502,8 @@ export const ReadResultWidget: React.FC<{ content: string; filePath?: string }> 
   const isLargeFile = lineCount > 20;
 
   return (
-    <div className="rounded-lg overflow-hidden border bg-zinc-950 w-full">
-      <div className="px-4 py-2 border-b bg-zinc-900/50 flex items-center justify-between">
+    <div className="rounded-lg overflow-hidden border bg-secondary w-full">
+      <div className="px-4 py-2 border-b bg-muted/70 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-xs font-mono text-muted-foreground">
@@ -557,7 +557,7 @@ export const ReadResultWidget: React.FC<{ content: string; filePath?: string }> 
       )}
       
       {isLargeFile && !isExpanded && (
-        <div className="px-4 py-3 text-xs text-muted-foreground text-center bg-zinc-900/30">
+        <div className="px-4 py-3 text-xs text-muted-foreground text-center bg-muted/30">
           Click "Expand" to view the full file
         </div>
       )}
@@ -651,8 +651,8 @@ export const BashWidget: React.FC<{
   }
   
   return (
-    <div className="rounded-lg border bg-zinc-950 overflow-hidden">
-      <div className="px-4 py-2 bg-zinc-900/50 flex items-center gap-2 border-b">
+    <div className="rounded-lg border bg-secondary overflow-hidden">
+      <div className="px-4 py-2 bg-muted/70 flex items-center gap-2 border-b">
         <Terminal className="h-3.5 w-3.5 text-green-500" />
         <span className="text-xs font-mono text-muted-foreground">Terminal</span>
         {description && (
@@ -755,9 +755,9 @@ export const WriteWidget: React.FC<{ filePath: string; content: string; result?:
         />
         
         {/* Modal content */}
-        <div className="relative w-[90vw] h-[90vh] max-w-7xl bg-zinc-950 rounded-lg border shadow-2xl overflow-hidden flex flex-col">
+        <div className="relative w-[90vw] h-[90vh] max-w-7xl bg-secondary rounded-lg border shadow-2xl overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="px-6 py-4 border-b bg-zinc-950 flex items-center justify-between">
+          <div className="px-6 py-4 border-b bg-secondary flex items-center justify-between">
             <div className="flex items-center gap-3">
               <FileText className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-mono text-muted-foreground">{filePath}</span>
@@ -798,7 +798,7 @@ export const WriteWidget: React.FC<{ filePath: string; content: string; result?:
 
   const CodePreview = ({ codeContent, truncated }: { codeContent: string; truncated: boolean }) => (
     <div 
-      className="rounded-lg border bg-zinc-950 overflow-hidden w-full"
+      className="rounded-lg border bg-secondary overflow-hidden w-full"
       style={{ 
         height: truncated ? '440px' : 'auto', 
         maxHeight: truncated ? '440px' : undefined,
@@ -806,7 +806,7 @@ export const WriteWidget: React.FC<{ filePath: string; content: string; result?:
         flexDirection: 'column' 
       }}
     >
-      <div className="px-4 py-2 border-b bg-zinc-950 flex items-center justify-between sticky top-0 z-10">
+      <div className="px-4 py-2 border-b bg-secondary flex items-center justify-between sticky top-0 z-10">
         <span className="text-xs font-mono text-muted-foreground">Preview</span>
         {isLargeContent && truncated && (
           <div className="flex items-center gap-2">
@@ -1014,7 +1014,7 @@ export const GrepWidget: React.FC<{
               </button>
               
               {isExpanded && (
-                <div className="rounded-lg border bg-zinc-950 overflow-hidden">
+                <div className="rounded-lg border bg-secondary overflow-hidden">
                   <div className="max-h-[400px] overflow-y-auto">
                     {grepResults.map((match, idx) => {
                       const fileName = match.file.split('/').pop() || match.file;
@@ -1024,7 +1024,7 @@ export const GrepWidget: React.FC<{
                         <div 
                           key={idx} 
                           className={cn(
-                            "flex items-start gap-3 p-3 border-b border-zinc-800 hover:bg-zinc-900/50 transition-colors",
+                            "flex items-start gap-3 p-3 border-b border-border hover:bg-muted/70 transition-colors",
                             idx === grepResults.length - 1 && "border-b-0"
                           )}
                         >
@@ -1138,7 +1138,7 @@ export const EditWidget: React.FC<{
         </code>
       </div>
 
-      <div className="rounded-lg border bg-zinc-950 overflow-hidden text-xs font-mono">
+      <div className="rounded-lg border bg-secondary overflow-hidden text-xs font-mono">
         <div className="max-h-[440px] overflow-y-auto overflow-x-auto">
           {diffResult.map((part, index) => {
             const partClass = part.added 
@@ -1149,7 +1149,7 @@ export const EditWidget: React.FC<{
             
             if (!part.added && !part.removed && part.count && part.count > 8) {
               return (
-                <div key={index} className="px-4 py-1 bg-zinc-900 border-y border-zinc-800 text-center text-zinc-500 text-xs">
+                <div key={index} className="px-4 py-1 bg-muted border-y border-border text-center text-zinc-500 text-xs">
                   ... {part.count} unchanged lines ...
                 </div>
               );
@@ -1231,7 +1231,7 @@ export const EditResultWidget: React.FC<{ content: string }> = ({ content }) => 
   const language = getLanguage(filePath);
 
   return (
-    <div className="rounded-lg border bg-zinc-950 overflow-hidden">
+    <div className="rounded-lg border bg-secondary overflow-hidden">
       <div className="px-4 py-2 border-b bg-emerald-950/30 flex items-center gap-2">
         <GitBranch className="h-3.5 w-3.5 text-emerald-500" />
         <span className="text-xs font-mono text-emerald-400">Edit Result</span>
@@ -1383,10 +1383,10 @@ export const MCPWidget: React.FC<{
           )}>
             <div className="relative">
               <div className={cn(
-                "rounded-lg border bg-zinc-950/50 overflow-hidden",
+                "rounded-lg border bg-secondary/50 overflow-hidden",
                 !isExpanded && isLargeInput && "max-h-[200px]"
               )}>
-                <div className="px-3 py-2 border-b bg-zinc-900/50 flex items-center gap-2">
+                <div className="px-3 py-2 border-b bg-muted/70 flex items-center gap-2">
                   <Code className="h-3 w-3 text-violet-500" />
                   <span className="text-xs font-mono text-muted-foreground">Parameters</span>
                 </div>
@@ -1452,8 +1452,8 @@ export const CommandWidget: React.FC<{
   commandArgs?: string;
 }> = ({ commandName, commandMessage, commandArgs }) => {
   return (
-    <div className="rounded-lg border bg-zinc-950/50 overflow-hidden">
-      <div className="px-4 py-2 border-b bg-zinc-900/50 flex items-center gap-2">
+    <div className="rounded-lg border bg-secondary/50 overflow-hidden">
+      <div className="px-4 py-2 border-b bg-muted/70 flex items-center gap-2">
         <Terminal className="h-3.5 w-3.5 text-blue-500" />
         <span className="text-xs font-mono text-blue-400">Command</span>
       </div>
@@ -1532,8 +1532,8 @@ export const CommandOutputWidget: React.FC<{
   };
 
   return (
-    <div className="rounded-lg border bg-zinc-950/50 overflow-hidden">
-      <div className="px-4 py-2 bg-zinc-900/50 flex items-center gap-2">
+    <div className="rounded-lg border bg-secondary/50 overflow-hidden">
+      <div className="px-4 py-2 bg-muted/70 flex items-center gap-2">
         <ChevronRight className="h-3 w-3 text-green-500" />
         <span className="text-xs font-mono text-green-400">Output</span>
       </div>
@@ -1618,7 +1618,7 @@ export const MultiEditWidget: React.FC<{
                 return (
                   <div key={index} className="space-y-1">
                     <div className="text-xs font-medium text-muted-foreground">Edit {index + 1}</div>
-                    <div className="rounded-lg border bg-zinc-950 overflow-hidden text-xs font-mono">
+                    <div className="rounded-lg border bg-secondary overflow-hidden text-xs font-mono">
                       <div className="max-h-[300px] overflow-y-auto overflow-x-auto">
                         {diffResult.map((part, partIndex) => {
                           const partClass = part.added 
@@ -1629,7 +1629,7 @@ export const MultiEditWidget: React.FC<{
                           
                           if (!part.added && !part.removed && part.count && part.count > 8) {
                             return (
-                              <div key={partIndex} className="px-4 py-1 bg-zinc-900 border-y border-zinc-800 text-center text-zinc-500 text-xs">
+                              <div key={partIndex} className="px-4 py-1 bg-muted border-y border-border text-center text-zinc-500 text-xs">
                                 ... {part.count} unchanged lines ...
                               </div>
                             );
@@ -2510,21 +2510,21 @@ export const TodoReadWidget: React.FC<{ todos?: any[]; result?: any }> = ({ todo
   // Status icons and colors
   const statusConfig = {
     completed: {
-      icon: <CheckCircle2 className="h-4 w-4" />,
+      icon: <CheckCircle2 className="h-3 w-3" />,
       color: "text-green-500",
       bgColor: "bg-green-500/10",
       borderColor: "border-green-500/20",
       label: "Completed"
     },
     in_progress: {
-      icon: <Clock className="h-4 w-4 animate-pulse" />,
+      icon: <Clock className="h-3 w-3 animate-pulse" />,
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
       borderColor: "border-blue-500/20",
       label: "In Progress"
     },
     pending: {
-      icon: <Circle className="h-4 w-4" />,
+      icon: <Circle className="h-3 w-3" />,
       color: "text-muted-foreground",
       bgColor: "bg-muted/50",
       borderColor: "border-muted",
@@ -2633,14 +2633,14 @@ export const TodoReadWidget: React.FC<{ todos?: any[]; result?: any }> = ({ todo
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         className={cn(
-          "group rounded-lg border p-4 transition-all hover:shadow-md cursor-pointer",
+          "group rounded-lg border p-2 transition-all hover:shadow-md cursor-pointer",
           config.bgColor,
           config.borderColor,
           todo.status === "completed" && "opacity-75"
         )}
         onClick={() => todo.id && toggleExpanded(todo.id)}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-2">
           <div className={cn("mt-0.5", config.color)}>
             {config.icon}
           </div>
@@ -2856,11 +2856,11 @@ export const TodoReadWidget: React.FC<{ todos?: any[]; result?: any }> = ({ todo
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <ListChecks className="h-5 w-5 text-primary" />
+        <div className="flex items-center gap-2">
+          <ListChecks className="h-4 w-4 text-primary" />
           <div>
             <h3 className="text-sm font-medium">Todo Overview</h3>
             <p className="text-xs text-muted-foreground">
@@ -2893,7 +2893,7 @@ export const TodoReadWidget: React.FC<{ todos?: any[]; result?: any }> = ({ todo
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-col sm:flex-row gap-1">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -2901,11 +2901,11 @@ export const TodoReadWidget: React.FC<{ todos?: any[]; result?: any }> = ({ todo
             placeholder="Search todos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9"
+            className="pl-9 h-8"
           />
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <div className="flex gap-1 p-1 bg-muted rounded-md">
             {["all", "pending", "in_progress", "completed", "cancelled"].map(status => (
               <Button
@@ -2948,8 +2948,8 @@ export const TodoReadWidget: React.FC<{ todos?: any[]; result?: any }> = ({ todo
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="list" className="mt-4">
-          <div className="space-y-2">
+        <TabsContent value="list" className="mt-2">
+          <div className="space-y-1">
             <AnimatePresence mode="popLayout">
               {filteredTodos.map(todo => (
                 <TodoCard 
@@ -2969,15 +2969,15 @@ export const TodoReadWidget: React.FC<{ todos?: any[]; result?: any }> = ({ todo
           </div>
         </TabsContent>
 
-        <TabsContent value="board" className="mt-4">
+        <TabsContent value="board" className="mt-2">
           <BoardView />
         </TabsContent>
 
-        <TabsContent value="timeline" className="mt-4">
+        <TabsContent value="timeline" className="mt-2">
           <TimelineView />
         </TabsContent>
 
-        <TabsContent value="stats" className="mt-4">
+        <TabsContent value="stats" className="mt-2">
           <StatsView />
         </TabsContent>
       </Tabs>
