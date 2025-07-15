@@ -32,7 +32,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { SplitPane } from "@/components/ui/split-pane";
 import { WebviewPreview } from "./WebviewPreview";
 import type { ClaudeStreamMessage } from "./AgentExecution";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { ConversationNavigation } from "./ConversationNavigation";
 
 interface ClaudeCodeSessionProps {
@@ -199,22 +198,6 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
     });
   }, [messages]);
 
-  const rowVirtualizer = useVirtualizer({
-    count: displayableMessages.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: (index) => {
-      // More accurate size estimation based on message type
-      const message = displayableMessages[index];
-      if (!message) return 150;
-      
-      // Estimate based on message type and content
-      if (message.type === 'user') return 80;
-      if (message.type === 'assistant') return 200;
-      if (message.type === 'result') return 120;
-      return 150;
-    },
-    overscan: 3, // Reduce overscan to minimize off-screen rendering
-  });
 
   // Prepare messages for navigation
   const navigationMessages = useMemo(() => {
@@ -339,12 +322,15 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (displayableMessages.length > 0) {
+    if (displayableMessages.length > 0 && parentRef.current) {
       setTimeout(() => {
-        rowVirtualizer.scrollToIndex(displayableMessages.length - 1, { align: 'end', behavior: 'smooth' });
+        parentRef.current?.scrollTo({
+          top: parentRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
       }, 100);
     }
-  }, [displayableMessages.length, rowVirtualizer]);
+  }, [displayableMessages.length]);
 
   // Calculate total tokens from messages
   useEffect(() => {
@@ -928,19 +914,20 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
     console.log('[Navigation] Navigating to:', { messageId, toolCallId });
     setActiveMessageId(messageId);
     
-    // Find the message element and scroll to it
-    const messageIndex = displayableMessages.findIndex(msg => msg.id === messageId);
-    console.log('[Navigation] Message index:', messageIndex, 'Total messages:', displayableMessages.length);
-    
-    if (messageIndex !== -1 && parentRef.current) {
-      // Use virtualized scrolling
-      rowVirtualizer.scrollToIndex(messageIndex, {
-        align: 'start',
-        behavior: 'smooth'
-      });
-    } else {
-      console.warn('[Navigation] Message not found or parentRef not available');
-    }
+    // Find the message element by ID and scroll to it
+    setTimeout(() => {
+      const targetElement = document.getElementById(`message-${messageId}`);
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+          inline: 'nearest'
+        });
+        console.log('[Navigation] Successfully scrolled to message:', messageId);
+      } else {
+        console.warn('[Navigation] Message element not found:', messageId);
+      }
+    }, 50); // Small delay to ensure DOM is updated
   };
 
   // Cleanup event listeners and track mount state
@@ -968,10 +955,7 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
   const messagesList = (
     <div
       ref={parentRef}
-      className="h-full overflow-y-auto relative chat-dialog-scroll"
-      style={{
-        contain: 'strict',
-      }}
+      className="h-full overflow-y-auto relative chat-dialog-scroll gpu-accelerated smooth-scroll"
     >
       {/* No messages placeholder */}
       {displayableMessages.length === 0 && (
@@ -983,34 +967,20 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
         </div>
       )}
       
-      <div
-        className="relative w-full px-2 pt-4 pb-2 virtual-scroll-container"
-        style={{
-          height: `${Math.max(rowVirtualizer.getTotalSize(), 100)}px`,
-          minHeight: '100px',
-        }}
-      >
-        {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-          const message = displayableMessages[virtualItem.index];
-          if (!message) return null;
-          return (
-            <div
-              key={virtualItem.key}
-              data-index={virtualItem.index}
-              ref={(el) => el && rowVirtualizer.measureElement(el)}
-              className="absolute inset-x-4 pb-4 virtual-scroll-item"
-              style={{
-                top: virtualItem.start,
-              }}
-            >
-              <StreamMessage 
-                message={message} 
-                streamMessages={messages}
-                onLinkDetected={handleLinkDetected}
-              />
-            </div>
-          );
-        })}
+      <div className="w-full px-2 pt-4 pb-2">
+        {displayableMessages.map((message) => (
+          <div
+            key={message.id}
+            id={`message-${message.id}`}
+            className="pb-4 message-container gpu-accelerated"
+          >
+            <StreamMessage 
+              message={message} 
+              streamMessages={messages}
+              onLinkDetected={handleLinkDetected}
+            />
+          </div>
+        ))}
       </div>
 
       {/* Loading indicator under the latest message */}
@@ -1018,7 +988,7 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center justify-center py-2 mb-2"
+          className="flex items-center justify-center py-2 mb-2 optimized-animation"
         >
           <div className="rotating-symbol text-primary" />
         </motion.div>
@@ -1029,7 +999,7 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="rounded-lg border border-destructive/50 bg-destructive/10 p-2 text-sm text-destructive mb-2 w-full px-2"
+          className="rounded-lg border border-destructive/50 bg-destructive/10 p-2 text-sm text-destructive mb-2 w-full px-2 optimized-animation"
         >
           {error}
         </motion.div>

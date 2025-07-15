@@ -185,7 +185,7 @@ export const ConversationNavigation: React.FC<ConversationNavigationProps> = ({
         </h3>
       </div>
       
-      <ScrollArea ref={scrollAreaRef} className="flex-1">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 gpu-accelerated smooth-scroll">
         <div ref={containerRef} className="py-1">
           {/* 分类标题 */}
           {navigationItems.length > 0 && (
@@ -206,7 +206,7 @@ export const ConversationNavigation: React.FC<ConversationNavigationProps> = ({
                 transition={{ delay: index * 0.05 }}
                 onClick={() => onNavigate(item.message.id)}
                 className={cn(
-                  "w-full text-left px-4 py-2 transition-all duration-200",
+                  "w-full text-left px-4 py-2 transition-all duration-200 optimized-animation",
                   "hover:bg-accent/30 group relative",
                   activeMessageId === item.message.id && "bg-accent/50"
                 )}
@@ -238,7 +238,7 @@ export const ConversationNavigation: React.FC<ConversationNavigationProps> = ({
                         transition={{ delay: index * 0.05 + (toolIndex + 1) * 0.02 }}
                         onClick={() => onNavigate(tool.messageId, tool.toolId)}
                         className={cn(
-                          "w-full text-left px-4 py-1 transition-all duration-200",
+                          "w-full text-left px-4 py-1 transition-all duration-200 optimized-animation",
                           "hover:bg-background/50 text-muted-foreground hover:text-foreground",
                           "flex items-center gap-2 text-xs group"
                         )}
