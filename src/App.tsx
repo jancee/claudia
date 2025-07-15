@@ -16,7 +16,6 @@ import { CCAgents } from "@/components/CCAgents";
 import { ClaudeCodeSession } from "@/components/ClaudeCodeSession";
 import { UsageDashboard } from "@/components/UsageDashboard";
 import { MCPManager } from "@/components/MCPManager";
-import { NFOCredits } from "@/components/NFOCredits";
 import { ClaudeBinaryDialog } from "@/components/ClaudeBinaryDialog";
 import { Toast, ToastContainer } from "@/components/ui/toast";
 import { ProjectSettings } from '@/components/ProjectSettings';
@@ -50,7 +49,6 @@ function App() {
   const [initialProjectPath, setInitialProjectPath] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showNFO, setShowNFO] = useState(false);
   const [showClaudeBinaryDialog, setShowClaudeBinaryDialog] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [activeClaudeSessionId, setActiveClaudeSessionId] = useState<string | null>(null);
@@ -212,6 +210,23 @@ function App() {
     setProjectForSettings(tempProject);
     setPreviousView(view);
     handleViewChange("project-settings");
+  };
+
+  const handleNewInstance = async () => {
+    try {
+      const windowLabel = await api.spawnNewInstance();
+      setToast({ 
+        message: `New instance created: ${windowLabel}`, 
+        type: "success" 
+      });
+      console.log(`Successfully created new instance: ${windowLabel}`);
+    } catch (error) {
+      console.error("Failed to create new instance:", error);
+      setToast({ 
+        message: "Failed to create new instance", 
+        type: "error" 
+      });
+    }
   };
 
   const renderContent = () => {
@@ -475,7 +490,7 @@ function App() {
           onSettingsClick={() => handleViewChange("settings")}
           onUsageClick={() => handleViewChange("usage-dashboard")}
           onMCPClick={() => handleViewChange("mcp")}
-          onInfoClick={() => setShowNFO(true)}
+          onNewInstanceClick={handleNewInstance}
         />
         
         {/* Main Content */}
@@ -483,8 +498,6 @@ function App() {
           {renderContent()}
         </div>
         
-        {/* NFO Credits Modal */}
-        {showNFO && <NFOCredits onClose={() => setShowNFO(false)} />}
         
         {/* Claude Binary Dialog */}
         <ClaudeBinaryDialog

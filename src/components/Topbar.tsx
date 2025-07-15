@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Circle, FileText, Settings, ExternalLink, BarChart3, Network, Info } from "lucide-react";
+import { Circle, FileText, Settings, ExternalLink, BarChart3, Network, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover } from "@/components/ui/popover";
 import { api, type ClaudeVersionStatus } from "@/lib/api";
@@ -24,9 +24,9 @@ interface TopbarProps {
    */
   onMCPClick: () => void;
   /**
-   * Callback when Info is clicked
+   * Callback when New Instance is clicked
    */
-  onInfoClick: () => void;
+  onNewInstanceClick: () => void;
   /**
    * Optional className for styling
    */
@@ -49,7 +49,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   onSettingsClick,
   onUsageClick,
   onMCPClick,
-  onInfoClick,
+  onNewInstanceClick,
   className,
 }) => {
   const [versionStatus, setVersionStatus] = useState<ClaudeVersionStatus | null>(null);
@@ -216,11 +216,11 @@ export const Topbar: React.FC<TopbarProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onInfoClick}
+          onClick={onNewInstanceClick}
           className="h-8 w-8"
-          title="About"
+          title="New Instance"
         >
-          <Info className="h-4 w-4" />
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
     </motion.div>

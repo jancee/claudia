@@ -1835,5 +1835,74 @@ export const api = {
       console.error("Failed to delete slash command:", error);
       throw error;
     }
+  },
+
+  // Window Management
+  /**
+   * Spawns a new Claudia instance window
+   * @param projectPath - Optional project path to open in the new instance
+   * @returns Promise resolving to the window label
+   */
+  async spawnNewInstance(projectPath?: string): Promise<string> {
+    try {
+      return await invoke<string>("spawn_new_instance", { projectPath });
+    } catch (error) {
+      console.error("Failed to spawn new instance:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Lists all active window instances
+   * @returns Promise resolving to array of window labels
+   */
+  async listWindows(): Promise<string[]> {
+    try {
+      return await invoke<string[]>("list_windows");
+    } catch (error) {
+      console.error("Failed to list windows:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Focuses a specific window
+   * @param windowLabel - The label of the window to focus
+   * @returns Promise resolving when window is focused
+   */
+  async focusWindow(windowLabel: string): Promise<void> {
+    try {
+      return await invoke<void>("focus_window", { windowLabel });
+    } catch (error) {
+      console.error("Failed to focus window:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Closes a specific window
+   * @param windowLabel - The label of the window to close
+   * @returns Promise resolving when window is closed
+   */
+  async closeWindow(windowLabel: string): Promise<void> {
+    try {
+      return await invoke<void>("close_window", { windowLabel });
+    } catch (error) {
+      console.error("Failed to close window:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Gets the current window label
+   * @returns Promise resolving to the current window label
+   */
+  async getCurrentWindowLabel(): Promise<string> {
+    try {
+      return await invoke<string>("get_current_window_label");
+    } catch (error) {
+      console.error("Failed to get current window label:", error);
+      throw error;
+    }
   }
 };
