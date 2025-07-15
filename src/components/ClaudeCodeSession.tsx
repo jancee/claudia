@@ -209,7 +209,7 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
   // Prepare messages for navigation
   const navigationMessages = useMemo(() => {
     return displayableMessages.map((msg, index) => {
-      const toolCalls = [];
+      const toolCalls: any[] = [];
       
       // Extract tool calls from assistant message content
       if (msg.type === 'assistant' && msg.message?.content) {
@@ -243,11 +243,11 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
           messageContent = msgData.content;
         }
         // Handle nested text property
-        else if (msgData.text) {
+        else if ('text' in msgData && msgData.text) {
           messageContent = msgData.text;
         }
         // Handle prompt property (for initial prompts)
-        else if (msgData.prompt) {
+        else if ('prompt' in msgData && msgData.prompt) {
           messageContent = msgData.prompt;
         }
         
@@ -272,23 +272,23 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
           messageContent = msgData.content;
         }
         // Handle nested text property
-        else if (msgData.text) {
+        else if ('text' in msgData && msgData.text) {
           messageContent = msgData.text;
         }
         // Handle direct content string
-        else if (msgData.output) {
+        else if ('output' in msgData && msgData.output) {
           messageContent = msgData.output;
         }
       }
       
       return {
         id: msg.id,
-        type: msg.type,
+        type: msg.type as 'user' | 'assistant',
         content: messageContent,
         toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
         index
       };
-    });
+    }).filter(msg => msg.type === 'user' || msg.type === 'assistant');
   }, [displayableMessages]);
 
   // Debug logging
@@ -1255,7 +1255,7 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
             <div className="w-96 border-r border-border">
               <ConversationNavigation
                 messages={navigationMessages}
-                activeMessageId={activeMessageId}
+                activeMessageId={activeMessageId || undefined}
                 onNavigate={handleNavigate}
               />
             </div>

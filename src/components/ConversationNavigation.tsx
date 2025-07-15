@@ -97,7 +97,7 @@ export const ConversationNavigation: React.FC<ConversationNavigationProps> = ({
         if (message.toolCalls && message.toolCalls.length > 0) {
           message.toolCalls.forEach((toolCall) => {
             const toolInfo = getToolInfo(toolCall.type, toolCall.name);
-            currentUserItem.tools.push({
+            currentUserItem!.tools.push({
               messageId: message.id,
               toolId: toolCall.id,
               info: toolInfo,

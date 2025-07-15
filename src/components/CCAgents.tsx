@@ -193,7 +193,7 @@ export const CCAgents: React.FC<CCAgentsProps> = ({ onBack, className }) => {
       const filePath = await save({
         defaultPath: `${agent.name.toLowerCase().replace(/\s+/g, '-')}.claudia.json`,
         filters: [{
-          name: 'Claudia Agent',
+          name: 'Claudia II Agent',
           extensions: ['claudia.json']
         }]
       });
@@ -222,7 +222,7 @@ export const CCAgents: React.FC<CCAgentsProps> = ({ onBack, className }) => {
       const filePath = await open({
         multiple: false,
         filters: [{
-          name: 'Claudia Agent',
+          name: 'Claudia II Agent',
           extensions: ['claudia.json', 'json']
         }]
       });

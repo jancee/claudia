@@ -6,7 +6,7 @@ PRD目录包含了你对这个工程的产品需求和技术架构设计的记�
 
 ## Project Overview
 
-Claudia is a desktop GUI application for Claude Code built with Tauri 2 (Rust backend) and React (TypeScript frontend). It provides visual project management, custom AI agents, usage analytics, and session timeline features for Claude Code users.
+Claudia II is a desktop GUI application for Claude Code built with Tauri 2 (Rust backend) and React (TypeScript frontend). It provides visual project management, custom AI agents, usage analytics, and session timeline features for Claude Code users.
 
 ## Essential Commands
 
