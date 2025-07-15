@@ -33,6 +33,7 @@ import { SplitPane } from "@/components/ui/split-pane";
 import { WebviewPreview } from "./WebviewPreview";
 import type { ClaudeStreamMessage } from "./AgentExecution";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { ConversationNavigation } from "./ConversationNavigation";
 
 interface ClaudeCodeSessionProps {
   /**
@@ -92,6 +93,8 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
   const [showSlashCommandsSettings, setShowSlashCommandsSettings] = useState(false);
   const [forkCheckpointId, setForkCheckpointId] = useState<string | null>(null);
   const [forkSessionName, setForkSessionName] = useState("");
+  const [showNavigation, setShowNavigation] = useState(true);
+  const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
   
   // Queued prompts state
   const [queuedPrompts, setQueuedPrompts] = useState<Array<{ id: string; prompt: string; model: "sonnet" | "opus" }>>([]);
@@ -203,6 +206,91 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
     overscan: 5,
   });
 
+  // Prepare messages for navigation
+  const navigationMessages = useMemo(() => {
+    return displayableMessages.map((msg, index) => {
+      const toolCalls = [];
+      
+      // Extract tool calls from assistant message content
+      if (msg.type === 'assistant' && msg.message?.content) {
+        msg.message.content.forEach((content: any) => {
+          if (content.type === 'tool_use') {
+            toolCalls.push({
+              id: content.id,
+              type: content.name || content.type,
+              name: content.name
+            });
+          }
+        });
+      }
+      
+      // Extract message content
+      let messageContent = '';
+      if (msg.type === 'user') {
+        // Handle different message structures
+        const msgData = msg.message || msg;
+        
+        // Try to extract text from content array
+        if (msgData.content && Array.isArray(msgData.content)) {
+          // Find the first text content
+          const textContent = msgData.content.find((c: any) => c.type === 'text');
+          if (textContent && textContent.text) {
+            messageContent = textContent.text;
+          }
+        } 
+        // Handle string content
+        else if (typeof msgData.content === 'string') {
+          messageContent = msgData.content;
+        }
+        // Handle nested text property
+        else if (msgData.text) {
+          messageContent = msgData.text;
+        }
+        // Handle prompt property (for initial prompts)
+        else if (msgData.prompt) {
+          messageContent = msgData.prompt;
+        }
+        
+        // Debug log if still empty
+        if (!messageContent && msgData.content) {
+          console.warn('[Navigation] Empty user content for message:', msg);
+        }
+      } else if (msg.type === 'assistant') {
+        // Extract assistant message content
+        const msgData = msg.message || msg;
+        
+        // Try to extract text from content array
+        if (msgData.content && Array.isArray(msgData.content)) {
+          // Find the first text content
+          const textContent = msgData.content.find((c: any) => c.type === 'text');
+          if (textContent && textContent.text) {
+            messageContent = textContent.text;
+          }
+        } 
+        // Handle string content
+        else if (typeof msgData.content === 'string') {
+          messageContent = msgData.content;
+        }
+        // Handle nested text property
+        else if (msgData.text) {
+          messageContent = msgData.text;
+        }
+        // Handle direct content string
+        else if (msgData.output) {
+          messageContent = msgData.output;
+        }
+      }
+      
+      return {
+        id: msg.id,
+        type: msg.type,
+        content: messageContent,
+        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+        index
+      };
+    });
+  }, [displayableMessages]);
+
   // Debug logging
   useEffect(() => {
     console.log('[ClaudeCodeSession] State update:', {
@@ -242,7 +330,9 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (displayableMessages.length > 0) {
-      rowVirtualizer.scrollToIndex(displayableMessages.length - 1, { align: 'end', behavior: 'smooth' });
+      setTimeout(() => {
+        rowVirtualizer.scrollToIndex(displayableMessages.length - 1, { align: 'end', behavior: 'smooth' });
+      }, 100);
     }
   }, [displayableMessages.length, rowVirtualizer]);
 
@@ -270,8 +360,9 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
       const history = await api.loadSessionHistory(session.id, session.project_id);
       
       // Convert history to messages format
-      const loadedMessages: ClaudeStreamMessage[] = history.map(entry => ({
+      const loadedMessages: ClaudeStreamMessage[] = history.map((entry, index) => ({
         ...entry,
+        id: entry.id || `history-${index}-${Date.now()}`,
         type: entry.type || "assistant"
       }));
       
@@ -349,6 +440,10 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
         
         // Parse and display
         const message = JSON.parse(event.payload) as ClaudeStreamMessage;
+        // Ensure message has an ID
+        if (!message.id) {
+          message.id = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        }
         setMessages(prev => [...prev, message]);
       } catch (err) {
         console.error("Failed to parse message:", err, event.payload);
@@ -514,6 +609,10 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
             setRawJsonlOutput((prev) => [...prev, payload]);
 
             const message = JSON.parse(payload) as ClaudeStreamMessage;
+            // Ensure message has an ID
+            if (!message.id) {
+              message.id = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            }
             setMessages((prev) => [...prev, message]);
           } catch (err) {
             console.error('Failed to parse message:', err, payload);
@@ -580,6 +679,7 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
 
         // Add the user message immediately to the UI (after setting up listeners)
         const userMessage: ClaudeStreamMessage = {
+          id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: "user",
           message: {
             content: [
@@ -716,6 +816,7 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
       
       // Add a message indicating the session was cancelled
       const cancelMessage: ClaudeStreamMessage = {
+        id: `cancel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: "system",
         subtype: "info",
         result: "Session cancelled by user",
@@ -728,6 +829,7 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
       // Even if backend fails, we should update UI to reflect stopped state
       // Add error message but still stop the UI loading state
       const errorMessage: ClaudeStreamMessage = {
+        id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: "system",
         subtype: "error",
         result: `Failed to cancel execution: ${err instanceof Error ? err.message : 'Unknown error'}. The process may still be running in the background.`,
@@ -812,6 +914,25 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
     }
   };
 
+  const handleNavigate = (messageId: string, toolCallId?: string) => {
+    console.log('[Navigation] Navigating to:', { messageId, toolCallId });
+    setActiveMessageId(messageId);
+    
+    // Find the message element and scroll to it
+    const messageIndex = displayableMessages.findIndex(msg => msg.id === messageId);
+    console.log('[Navigation] Message index:', messageIndex, 'Total messages:', displayableMessages.length);
+    
+    if (messageIndex !== -1 && parentRef.current) {
+      // Use virtualized scrolling
+      rowVirtualizer.scrollToIndex(messageIndex, {
+        align: 'start',
+        behavior: 'smooth'
+      });
+    } else {
+      console.warn('[Navigation] Message not found or parentRef not available');
+    }
+  };
+
   // Cleanup event listeners and track mount state
   useEffect(() => {
     isMountedRef.current = true;
@@ -837,13 +958,23 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
   const messagesList = (
     <div
       ref={parentRef}
-      className="flex-1 overflow-y-auto relative pb-40"
+      className="h-full overflow-y-auto relative chat-dialog-scroll"
       style={{
         contain: 'strict',
       }}
     >
+      {/* No messages placeholder */}
+      {displayableMessages.length === 0 && (
+        <div className="flex items-center justify-center py-4 text-muted-foreground">
+          <div className="text-center">
+            <p className="text-sm mb-1">No messages yet</p>
+            <p className="text-xs">Start a conversation to see messages here</p>
+          </div>
+        </div>
+      )}
+      
       <div
-        className="relative w-full max-w-5xl mx-auto px-4 pt-8 pb-4"
+        className="relative w-full px-2 pt-4 pb-2"
         style={{
           height: `${Math.max(rowVirtualizer.getTotalSize(), 100)}px`,
           minHeight: '100px',
@@ -852,6 +983,7 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
         <AnimatePresence>
           {rowVirtualizer.getVirtualItems().map((virtualItem) => {
             const message = displayableMessages[virtualItem.index];
+            if (!message) return null;
             return (
               <motion.div
                 key={virtualItem.key}
@@ -882,7 +1014,7 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center justify-center py-4 mb-40"
+          className="flex items-center justify-center py-2 mb-2"
         >
           <div className="rotating-symbol text-primary" />
         </motion.div>
@@ -893,7 +1025,7 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive mb-40 w-full max-w-5xl mx-auto"
+          className="rounded-lg border border-destructive/50 bg-destructive/10 p-2 text-sm text-destructive mb-2 w-full px-2"
         >
           {error}
         </motion.div>
@@ -1035,23 +1167,42 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
                 </Tooltip>
               </TooltipProvider>
               {effectiveSession && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowTimeline(!showTimeline)}
-                        className="h-8 w-8"
-                      >
-                        <GitBranch className={cn("h-4 w-4", showTimeline && "text-primary")} />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Timeline Navigator</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setShowNavigation(!showNavigation)}
+                          className="h-8 w-8"
+                        >
+                          <Hash className={cn("h-4 w-4", showNavigation && "text-primary")} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Conversation Navigation</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setShowTimeline(!showTimeline)}
+                          className="h-8 w-8"
+                        >
+                          <GitBranch className={cn("h-4 w-4", showTimeline && "text-primary")} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Timeline Navigator</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </>
               )}
               {messages.length > 0 && (
                 <Popover
@@ -1094,199 +1245,195 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
           </div>
         </motion.div>
 
-        {/* Main Content Area */}
+        {/* Main Content Area with Navigation */}
         <div className={cn(
-          "flex-1 overflow-hidden transition-all duration-300",
+          "flex-1 flex overflow-hidden transition-all duration-300",
           showTimeline && "sm:mr-96"
         )}>
-          {showPreview ? (
-            // Split pane layout when preview is active
-            <SplitPane
-              left={
-                <div className="h-full flex flex-col">
-                  {projectPathInput}
-                  {messagesList}
-                </div>
-              }
-              right={
-                <WebviewPreview
-                  initialUrl={previewUrl}
-                  onClose={handleClosePreview}
-                  isMaximized={isPreviewMaximized}
-                  onToggleMaximize={handleTogglePreviewMaximize}
-                  onUrlChange={handlePreviewUrlChange}
-                />
-              }
-              initialSplit={splitPosition}
-              onSplitChange={setSplitPosition}
-              minLeftWidth={400}
-              minRightWidth={400}
-              className="h-full"
-            />
-          ) : (
-            // Original layout when no preview
-            <div className="h-full flex flex-col max-w-5xl mx-auto">
-              {projectPathInput}
-              {messagesList}
-              
-              {isLoading && messages.length === 0 && (
-                <div className="flex items-center justify-center h-full">
-                  <div className="flex items-center gap-3">
-                    <div className="rotating-symbol text-primary" />
-                    <span className="text-sm text-muted-foreground">
-                      {session ? "Loading session history..." : "Initializing Claude Code..."}
-                    </span>
-                  </div>
-                </div>
-              )}
+          {/* Navigation Sidebar */}
+          {showNavigation && (
+            <div className="w-96 border-r border-border">
+              <ConversationNavigation
+                messages={navigationMessages}
+                activeMessageId={activeMessageId}
+                onNavigate={handleNavigate}
+              />
             </div>
           )}
+          
+          {/* Chat Content */}
+          <div className="flex-1 overflow-hidden">
+            {showPreview ? (
+              // Split pane layout when preview is active
+              <SplitPane
+                left={
+                  <div className="h-full flex flex-col">
+                    {projectPathInput}
+                    <div className="flex-1 min-h-0 overflow-hidden">
+                      {messagesList}
+                    </div>
+                  </div>
+                }
+                right={
+                  <WebviewPreview
+                    initialUrl={previewUrl}
+                    onClose={handleClosePreview}
+                    isMaximized={isPreviewMaximized}
+                    onToggleMaximize={handleTogglePreviewMaximize}
+                    onUrlChange={handlePreviewUrlChange}
+                  />
+                }
+                initialSplit={splitPosition}
+                onSplitChange={setSplitPosition}
+                minLeftWidth={400}
+                minRightWidth={400}
+                className="h-full"
+              />
+            ) : (
+              // Original layout when no preview
+              <div className="h-full flex flex-col">
+                {projectPathInput}
+                <div className="flex-1 min-h-0 overflow-hidden">
+                  {messagesList}
+                </div>
+                
+                {isLoading && messages.length === 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="flex items-center gap-3">
+                      <div className="rotating-symbol text-primary" />
+                      <span className="text-sm text-muted-foreground">
+                        {session ? "Loading session history..." : "Initializing Claude Code..."}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Floating Prompt Input - Always visible */}
-        <ErrorBoundary>
-          {/* Queued Prompts Display */}
-          <AnimatePresence>
-            {queuedPrompts.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 w-full max-w-3xl px-4"
-              >
-                <div className="bg-background/95 backdrop-blur-md border rounded-lg shadow-lg p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-medium text-muted-foreground mb-1">
-                      Queued Prompts ({queuedPrompts.length})
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => setQueuedPromptsCollapsed(prev => !prev)}>
-                      {queuedPromptsCollapsed ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    </Button>
-                  </div>
-                  {!queuedPromptsCollapsed && queuedPrompts.map((queuedPrompt, index) => (
-                    <motion.div
-                      key={queuedPrompt.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-start gap-2 bg-muted/50 rounded-md p-2"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium text-muted-foreground">#{index + 1}</span>
-                          <span className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded">
-                            {queuedPrompt.model === "opus" ? "Opus" : "Sonnet"}
-                          </span>
-                        </div>
-                        <p className="text-sm line-clamp-2 break-words">{queuedPrompt.prompt}</p>
+        {/* Bottom Section - Queued Prompts and Input */}
+        <div className="flex-shrink-0 border-t border-border">
+          <ErrorBoundary>
+            {/* Queued Prompts Display */}
+            <AnimatePresence>
+              {queuedPrompts.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  className="border-b border-border bg-background/50 p-3"
+                >
+                  <div className="max-w-full mx-auto">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs font-medium text-muted-foreground">
+                        Queued Prompts ({queuedPrompts.length})
                       </div>
+                      <Button variant="ghost" size="icon" onClick={() => setQueuedPromptsCollapsed(prev => !prev)}>
+                        {queuedPromptsCollapsed ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      </Button>
+                    </div>
+                    {!queuedPromptsCollapsed && (
+                      <div className="space-y-2">
+                        {queuedPrompts.map((queuedPrompt, index) => (
+                          <motion.div
+                            key={queuedPrompt.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="flex items-start gap-2 bg-muted/50 rounded-md p-2"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-medium text-muted-foreground">#{index + 1}</span>
+                                <span className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded">
+                                  {queuedPrompt.model === "opus" ? "Opus" : "Sonnet"}
+                                </span>
+                              </div>
+                              <p className="text-sm line-clamp-2 break-words">{queuedPrompt.prompt}</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 flex-shrink-0"
+                              onClick={() => setQueuedPrompts(prev => prev.filter(p => p.id !== queuedPrompt.id))}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Input Section */}
+            <div className="bg-background">
+              <FloatingPromptInput
+                ref={floatingPromptRef}
+                onSend={handleSendPrompt}
+                onCancel={handleCancelExecution}
+                isLoading={isLoading}
+                disabled={!projectPath}
+                projectPath={projectPath}
+              />
+              
+              {/* Token Counter and Navigation Controls */}
+              <div className="flex items-center justify-between px-4 py-2 border-t border-border/50">
+                <div className="flex items-center gap-2">
+                  {/* Navigation Arrows */}
+                  {displayableMessages.length > 5 && (
+                    <div className="flex items-center bg-background border rounded-full shadow-sm overflow-hidden">
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 flex-shrink-0"
-                        onClick={() => setQueuedPrompts(prev => prev.filter(p => p.id !== queuedPrompt.id))}
+                        size="sm"
+                        onClick={() => {
+                          if (displayableMessages.length > 0) {
+                            parentRef.current?.scrollTo({
+                              top: 0,
+                              behavior: 'smooth'
+                            });
+                          }
+                        }}
+                        className="px-3 py-2 hover:bg-accent rounded-none"
+                        title="Scroll to top"
                       >
-                        <X className="h-3 w-3" />
+                        <ChevronUp className="h-4 w-4" />
                       </Button>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Navigation Arrows - positioned above prompt bar with spacing */}
-          {displayableMessages.length > 5 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ delay: 0.5 }}
-              className="fixed bottom-32 right-6 z-50"
-            >
-              <div className="flex items-center bg-background/95 backdrop-blur-md border rounded-full shadow-lg overflow-hidden">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    // Use virtualizer to scroll to the first item
-                    if (displayableMessages.length > 0) {
-                      // Scroll to top of the container
-                      parentRef.current?.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                      });
-                      
-                      // After smooth scroll completes, trigger a small scroll to ensure rendering
-                      setTimeout(() => {
-                        if (parentRef.current) {
-                          // Scroll down 1px then back to 0 to trigger virtualizer update
-                          parentRef.current.scrollTop = 1;
-                          requestAnimationFrame(() => {
-                            if (parentRef.current) {
-                              parentRef.current.scrollTop = 0;
+                      <div className="w-px h-4 bg-border" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (displayableMessages.length > 0) {
+                            const scrollElement = parentRef.current;
+                            if (scrollElement) {
+                              scrollElement.scrollTo({
+                                top: scrollElement.scrollHeight,
+                                behavior: 'smooth'
+                              });
                             }
-                          });
-                        }
-                      }, 500); // Wait for smooth scroll to complete
-                    }
-                  }}
-                  className="px-3 py-2 hover:bg-accent rounded-none"
-                  title="Scroll to top"
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </Button>
-                <div className="w-px h-4 bg-border" />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    // Use virtualizer to scroll to the last item
-                    if (displayableMessages.length > 0) {
-                      // Scroll to bottom of the container
-                      const scrollElement = parentRef.current;
-                      if (scrollElement) {
-                        scrollElement.scrollTo({
-                          top: scrollElement.scrollHeight,
-                          behavior: 'smooth'
-                        });
-                      }
-                    }
-                  }}
-                  className="px-3 py-2 hover:bg-accent rounded-none"
-                  title="Scroll to bottom"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          <div className={cn(
-            "fixed bottom-0 left-0 right-0 transition-all duration-300 z-50",
-            showTimeline && "sm:right-96"
-          )}>
-            <FloatingPromptInput
-              ref={floatingPromptRef}
-              onSend={handleSendPrompt}
-              onCancel={handleCancelExecution}
-              isLoading={isLoading}
-              disabled={!projectPath}
-              projectPath={projectPath}
-            />
-          </div>
-
-          {/* Token Counter - positioned under the Send button */}
-          {totalTokens > 0 && (
-            <div className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none">
-              <div className="max-w-5xl mx-auto">
-                <div className="flex justify-end px-4 pb-2">
+                          }
+                        }}
+                        className="px-3 py-2 hover:bg-accent rounded-none"
+                        title="Scroll to bottom"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Token Counter */}
+                {totalTokens > 0 && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
-                    className="bg-background/95 backdrop-blur-md border rounded-full px-3 py-1 shadow-lg pointer-events-auto"
+                    className="bg-background border rounded-full px-3 py-1 shadow-sm"
                   >
                     <div className="flex items-center gap-1.5 text-xs">
                       <Hash className="h-3 w-3 text-muted-foreground" />
@@ -1294,11 +1441,11 @@ export const ClaudeCodeSession: React.FC<ClaudeCodeSessionProps> = ({
                       <span className="text-muted-foreground">tokens</span>
                     </div>
                   </motion.div>
-                </div>
+                )}
               </div>
             </div>
-          )}
-        </ErrorBoundary>
+          </ErrorBoundary>
+        </div>
 
         {/* Timeline */}
         <AnimatePresence>
