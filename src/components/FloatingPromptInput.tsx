@@ -863,10 +863,10 @@ const FloatingPromptInputInner = (
         )}
       </AnimatePresence>
 
-      {/* Fixed Position Input Bar */}
+      {/* Input Bar */}
       <div
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border",
+          "w-full bg-background",
           dragActive && "ring-2 ring-primary ring-offset-2",
           className
         )}
@@ -875,7 +875,7 @@ const FloatingPromptInputInner = (
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        <div className="max-w-5xl mx-auto">
+        <div className="w-full">
           {/* Image previews */}
           {embeddedImages.length > 0 && (
             <ImagePreview
