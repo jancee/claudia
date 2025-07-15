@@ -47,6 +47,7 @@ function App() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [editingClaudeFile, setEditingClaudeFile] = useState<ClaudeMdFile | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [initialProjectPath, setInitialProjectPath] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showNFO, setShowNFO] = useState(false);
@@ -128,6 +129,20 @@ function App() {
   const handleNewSession = async () => {
     handleViewChange("claude-code-session");
     setSelectedSession(null);
+    setInitialProjectPath(null);
+  };
+
+  /**
+   * Creates a new Claude Code session for the current project
+   */
+  const handleCreateSession = async () => {
+    if (!selectedProject) return;
+    
+    // Navigate to Claude Code session view with the project path
+    // This will allow the user to start a new session in the project directory
+    setSelectedSession(null);
+    setInitialProjectPath(selectedProject.path);
+    handleViewChange("claude-code-session");
   };
 
   /**
@@ -341,6 +356,7 @@ function App() {
                         projectPath={selectedProject.path}
                         onBack={handleBack}
                         onEditClaudeFile={handleEditClaudeFile}
+                        onCreateSession={handleCreateSession}
                       />
                     </motion.div>
                   ) : (
@@ -407,8 +423,10 @@ function App() {
         return (
           <ClaudeCodeSession
             session={selectedSession || undefined}
+            initialProjectPath={initialProjectPath || undefined}
             onBack={() => {
               setSelectedSession(null);
+              setInitialProjectPath(null);
               handleViewChange("projects");
             }}
             onStreamingChange={(isStreaming, sessionId) => {

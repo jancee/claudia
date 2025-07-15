@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, ArrowLeft, Calendar, Clock, MessageSquare } from "lucide-react";
+import { FileText, ArrowLeft, Calendar, Clock, MessageSquare, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
@@ -31,6 +31,10 @@ interface SessionListProps {
    */
   onEditClaudeFile?: (file: ClaudeMdFile) => void;
   /**
+   * Callback when the create session button is clicked
+   */
+  onCreateSession?: () => void;
+  /**
    * Optional className for styling
    */
   className?: string;
@@ -55,6 +59,7 @@ export const SessionList: React.FC<SessionListProps> = ({
   onBack,
   onSessionClick,
   onEditClaudeFile,
+  onCreateSession,
   className,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -105,6 +110,25 @@ export const SessionList: React.FC<SessionListProps> = ({
             projectPath={projectPath}
             onEditFile={onEditClaudeFile}
           />
+        </motion.div>
+      )}
+
+      {/* Create Session Button */}
+      {onCreateSession && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.15 }}
+          className="flex justify-center mb-4"
+        >
+          <Button
+            onClick={onCreateSession}
+            className="flex items-center gap-2 px-4 py-2"
+            variant="outline"
+          >
+            <Plus className="h-4 w-4" />
+            Create New Session
+          </Button>
         </motion.div>
       )}
 

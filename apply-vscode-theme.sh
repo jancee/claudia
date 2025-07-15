@@ -20,6 +20,8 @@ backup_files() {
     cp src/components/ToolWidgets.tsx src/components/ToolWidgets.tsx.backup 2>/dev/null || true
     cp src/components/ClaudeCodeSession.tsx src/components/ClaudeCodeSession.tsx.backup 2>/dev/null || true
     cp src/components/FloatingPromptInput.tsx src/components/FloatingPromptInput.tsx.backup 2>/dev/null || true
+    cp src-tauri/tauri.conf.json src-tauri/tauri.conf.json.backup 2>/dev/null || true
+    cp src/App.tsx src/App.tsx.backup 2>/dev/null || true
     echo "✅ Backups created"
 }
 
@@ -146,6 +148,25 @@ add_conversation_navigation() {
     echo "   - Toggle with the # button in the toolbar"
 }
 
+# Apply custom title bar
+apply_custom_titlebar() {
+    echo "🎨 Applying custom VS Code style title bar..."
+    
+    # Check if files exist
+    check_file "src-tauri/tauri.conf.json"
+    
+    # The CustomTitleBar component should exist
+    if [ ! -f "src/components/CustomTitleBar.tsx" ]; then
+        echo "⚠️  CustomTitleBar.tsx not found. Please ensure the file has been created."
+        return 1
+    fi
+    
+    echo "✅ Custom title bar configured"
+    echo "   - Native macOS title bar replaced with VS Code style"
+    echo "   - Window controls match VS Code theme"
+    echo "   - Draggable title bar area"
+}
+
 # Restore original theme
 restore_theme() {
     echo "🔄 Restoring original theme..."
@@ -168,6 +189,16 @@ restore_theme() {
     if [ -f "src/components/FloatingPromptInput.tsx.backup" ]; then
         mv src/components/FloatingPromptInput.tsx.backup src/components/FloatingPromptInput.tsx
         echo "✅ FloatingPromptInput.tsx restored"
+    fi
+    
+    if [ -f "src-tauri/tauri.conf.json.backup" ]; then
+        mv src-tauri/tauri.conf.json.backup src-tauri/tauri.conf.json
+        echo "✅ tauri.conf.json restored"
+    fi
+    
+    if [ -f "src/App.tsx.backup" ]; then
+        mv src/App.tsx.backup src/App.tsx
+        echo "✅ App.tsx restored"
     fi
     
     echo "✅ Original theme restored"
@@ -206,6 +237,7 @@ main() {
     apply_component_changes
     apply_fullwidth_chat
     add_conversation_navigation
+    apply_custom_titlebar
     
     echo ""
     echo "🎉 VS Code Dark Theme applied successfully!"
