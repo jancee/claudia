@@ -109,10 +109,10 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
       
       const renderedCard = (
         <Card className={cn("border-primary/20 bg-primary/5", className)}>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
+          <CardContent className="p-2">
+            <div className="flex items-start gap-2">
               <Bot className="h-5 w-5 text-primary mt-0.5" />
-              <div className="flex-1 space-y-2 min-w-0">
+              <div className="flex-1 space-y-1 min-w-0">
                 {msg.content && Array.isArray(msg.content) && msg.content.map((content: any, idx: number) => {
                   // Text content - render as markdown
                   if (content.type === "text") {
@@ -123,7 +123,7 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                     
                     renderedSomething = true;
                     return (
-                      <div key={idx} className="prose prose-sm dark:prose-invert max-w-none">
+                      <div key={idx} className="prose prose-compact dark:prose-invert max-w-none">
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
                           components={{
@@ -274,15 +274,15 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                     // Fallback to basic tool display
                     renderedSomething = true;
                     return (
-                      <div key={idx} className="space-y-2">
-                        <div className="flex items-center gap-2">
+                      <div key={idx} className="space-y-1">
+                        <div className="flex items-center gap-1">
                           <Terminal className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm font-medium">
                             Using tool: <code className="font-mono">{content.name}</code>
                           </span>
                         </div>
                         {content.input && (
-                          <div className="ml-6 p-2 bg-background rounded-md border">
+                          <div className="ml-4 p-1 bg-background rounded-md border">
                             <pre className="text-xs font-mono overflow-x-auto">
                               {JSON.stringify(content.input, null, 2)}
                             </pre>
@@ -322,10 +322,10 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
       
       const renderedCard = (
         <Card className={cn("border-muted-foreground/20 bg-muted/20", className)}>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
+          <CardContent className="p-2">
+            <div className="flex items-start gap-2">
               <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div className="flex-1 space-y-2 min-w-0">
+              <div className="flex-1 space-y-1 min-w-0">
                 {/* Handle content that is a simple string (e.g. from user commands) */}
                 {(typeof msg.content === 'string' || (msg.content && !Array.isArray(msg.content))) && (
                   (() => {
@@ -416,14 +416,14 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                       
                       renderedSomething = true;
                       return (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center gap-2">
+                        <div key={idx} className="space-y-1">
+                          <div className="flex items-center gap-1">
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                             <span className="text-sm font-medium">Tool Result</span>
                           </div>
                           
                           {beforeReminder && (
-                            <div className="ml-6 p-2 bg-background rounded-md border">
+                            <div className="ml-4 p-1 bg-background rounded-md border">
                               <pre className="text-xs font-mono overflow-x-auto whitespace-pre-wrap">
                                 {beforeReminder}
                               </pre>
@@ -435,7 +435,7 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                           </div>
                           
                           {afterReminder && (
-                            <div className="ml-6 p-2 bg-background rounded-md border">
+                            <div className="ml-4 p-1 bg-background rounded-md border">
                               <pre className="text-xs font-mono overflow-x-auto whitespace-pre-wrap">
                                 {afterReminder}
                               </pre>
@@ -451,8 +451,8 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                     if (isEditResult) {
                       renderedSomething = true;
                       return (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center gap-2">
+                        <div key={idx} className="space-y-1">
+                          <div className="flex items-center gap-1">
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                             <span className="text-sm font-medium">Edit Result</span>
                           </div>
@@ -469,8 +469,8 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                     if (isMultiEditResult) {
                       renderedSomething = true;
                       return (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center gap-2">
+                        <div key={idx} className="space-y-1">
+                          <div className="flex items-center gap-1">
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                             <span className="text-sm font-medium">MultiEdit Result</span>
                           </div>
@@ -519,8 +519,8 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                     if (isLSResult) {
                       renderedSomething = true;
                       return (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center gap-2">
+                        <div key={idx} className="space-y-1">
+                          <div className="flex items-center gap-1">
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                             <span className="text-sm font-medium">Directory Contents</span>
                           </div>
@@ -558,8 +558,8 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                       
                       renderedSomething = true;
                       return (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center gap-2">
+                        <div key={idx} className="space-y-1">
+                          <div className="flex items-center gap-1">
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                             <span className="text-sm font-medium">Read Result</span>
                           </div>
@@ -572,12 +572,12 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                     if (!contentText || contentText.trim() === '') {
                       renderedSomething = true;
                       return (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center gap-2">
+                        <div key={idx} className="space-y-1">
+                          <div className="flex items-center gap-1">
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                             <span className="text-sm font-medium">Tool Result</span>
                           </div>
-                          <div className="ml-6 p-3 bg-muted/50 rounded-md border text-sm text-muted-foreground italic">
+                          <div className="ml-4 p-2 bg-muted/50 rounded-md border text-sm text-muted-foreground italic">
                             Tool did not return any output
                           </div>
                         </div>
@@ -586,8 +586,8 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                     
                     renderedSomething = true;
                     return (
-                      <div key={idx} className="space-y-2">
-                        <div className="flex items-center gap-2">
+                      <div key={idx} className="space-y-1">
+                        <div className="flex items-center gap-1">
                           {content.is_error ? (
                             <AlertCircle className="h-4 w-4 text-destructive" />
                           ) : (
@@ -595,7 +595,7 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                           )}
                           <span className="text-sm font-medium">Tool Result</span>
                         </div>
-                        <div className="ml-6 p-2 bg-background rounded-md border">
+                        <div className="ml-4 p-1 bg-background rounded-md border">
                           <pre className="text-xs font-mono overflow-x-auto whitespace-pre-wrap">
                             {contentText}
                           </pre>
@@ -639,20 +639,20 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
           isError ? "border-destructive/20 bg-destructive/5" : "border-green-500/20 bg-green-500/5",
           className
         )}>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
+          <CardContent className="p-2">
+            <div className="flex items-start gap-2">
               {isError ? (
                 <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
               ) : (
                 <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
               )}
-              <div className="flex-1 space-y-2">
+              <div className="flex-1 space-y-1">
                 <h4 className="font-semibold text-sm">
                   {isError ? "Execution Failed" : "Execution Complete"}
                 </h4>
                 
                 {message.result && (
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <div className="prose prose-compact dark:prose-invert max-w-none">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
@@ -684,7 +684,7 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                   <div className="text-sm text-destructive">{message.error}</div>
                 )}
                 
-                <div className="text-xs text-muted-foreground space-y-1 mt-2">
+                <div className="text-xs text-muted-foreground space-y-1 mt-1">
                   {(message.cost_usd !== undefined || message.total_cost_usd !== undefined) && (
                     <div>Cost: ${((message.cost_usd || message.total_cost_usd)!).toFixed(4)} USD</div>
                   )}
@@ -715,8 +715,8 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
     console.error("Error rendering stream message:", error, message);
     return (
       <Card className={cn("border-destructive/20 bg-destructive/5", className)}>
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
+        <CardContent className="p-2">
+          <div className="flex items-start gap-2">
             <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-medium">Error rendering message</p>
